@@ -1,0 +1,25 @@
+{
+  "name": "login-watchdog",
+  "version": "1.0.0",
+  "description": "Puppeteer login watchdog",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "start-dev": "NODE_ENV=dev node index.js"
+  },
+  "author": "Charlie Hileman",
+  "license": "MIT",
+  "dependencies": {
+    "dateformat": "^3.0.3",
+    "dotenv": "^8.0.0",
+    "puppeteer": "^1.18.0",
+    "superagent": "^5.1.0"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "eslint": "^6.1.0",
+    "eslint-config-prettier": "^6.0.0",
+    "eslint-plugin-prettier": "^3.1.0",
+    "prettier": "^1.18.2"
+  }
+}

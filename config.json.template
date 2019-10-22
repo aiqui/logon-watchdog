@@ -1,0 +1,79 @@
+{
+    "authentication": {
+        "username": "USERNAME",
+        "password": "PASSWORD"
+    },
+    "timeouts": {
+        "default": 60,
+        "request": 2,
+        "login": 10,
+        "end": 10
+    },
+    "start": {
+        "url": "https://EXAMPLE.COM/START"
+    },
+    "login":{
+        "url": "https://EXAMPLE.COM/LOGIN",
+        "selectors": {
+            "user_id": "#loginRequest > div > input#userId",
+            "password": "#loginRequest > div > input#password",
+            "login_btn": "#loginRequest > div > input#loginbtn"
+        }
+    },
+    "end": {
+        "url": "https://EXAMPLE.COM/SUCCESS",
+        "selectors": {
+            "common": "#example > div > #success"
+        }
+    },
+    "listener": {
+        "valid_codes": [ 200, 301, 302, 304, 307 ],
+        "ignore_hostnames": [
+            "www.google-analytics.com"
+        ]
+    },
+    "cookies": {
+        "path": "./logs/cookies.txt",
+        "urls": [
+            "https://EXAMPLE.COM",
+        ],
+        "active": true
+    },
+
+    "process": {
+        "timeout_secs": 40,
+        "poll_secs": 2
+    },
+
+    "time": {
+        "zone_local": "America/New_York",
+        "zone_global": "GMT"
+    },
+
+    "system": {
+        "log_dir": "logs",
+        "expire_log_days": 30,
+        "report_url": "https://EXAMPLE.COM/watchdog/",
+        "cookie_path": "/tmp/watchdog-cookies.tmp"
+    },
+
+    "application": {
+        "success_string": "application successfully reached"
+    },
+
+    "slack": {
+        "url":   "https://hooks.slack.com/services/XYZ",
+        "channel": "system",
+        "user": "Administrator",
+        "emoji": ":dog:"
+    },
+
+    "cloudwatch": {
+        "access_id": "ACCESS ID",
+        "secret_key": "ACCESS KEY",
+        "metric_watchdog": "watchdog",
+        "server_id": "i-01234567",
+        "server_name": "Production",
+        "failure_time":  999.9
+    }
+}

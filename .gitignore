@@ -1,0 +1,8 @@
+config.json
+logs
+
+.idea
+
+*.iml
+
+node_modules
