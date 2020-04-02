@@ -19,7 +19,7 @@ const retry = (fn, ms = 1000, maxRetries = 5) =>
             .then(resolve)
             .catch(() => {
                 setTimeout(() => {
-                    console.log('retrying failed promise...');
+                    statusMsg('retrying failed promise...');
                     ++retries;
                     if (retries === maxRetries) {
                         return reject('maximum retries exceeded');
@@ -30,10 +30,14 @@ const retry = (fn, ms = 1000, maxRetries = 5) =>
     });
 
 const errorMsg = async (msg, exitCode = -1) => {
-    console.error(msg);
+    console.error(`  watchdog-monitor: ${msg}`);
     if (exitCode) {
         process.exit(exitCode);
     }
+};
+
+const statusMsg = async (msg) => {
+    console.log(`  watchdog-monitor: ${msg}`);
 };
 
 const isDir = async (path) => {
@@ -49,10 +53,10 @@ const isDir = async (path) => {
 const saveScreen = async (page, prefix, logDir, saveContent) => {
     const imageFile = `${logDir}/${prefix}.png`,
           contentFile = `${logDir}/${prefix}.html`;
-    console.log(`Saving screenshot to: ${imageFile}`);
+    statusMsg(`saving screenshot to: ${imageFile}`);
     await page.screenshot({path: imageFile});
     if (saveContent) {
-        console.log(`Saving content to: ${contentFile}`);
+        statusMsg(`saving content to: ${contentFile}`);
         await fs.writeFileSync(contentFile, await page.content());
     }
 };
@@ -106,10 +110,10 @@ const displayFormat = async () => {
 
     // Read cookies if enabled
     if (config.cookies.active) {
-        await cookies.read(page, config.cookies.path);
+        await cookies.read(page, config.cookies.path, statusMsg);
     }
 
-    console.log(`Entering website: ${startUrl}`);
+    statusMsg(`entering website: ${startUrl}`);
 
     // set the initial login to high timeout, along with retry.
     page.setDefaultNavigationTimeout(config.timeouts.default * 1000);
@@ -118,14 +122,14 @@ const displayFormat = async () => {
     const MAX_RETRY = 5;
     const response = await retry(() => page.goto(startUrl), REQ_TIMEOUT_MS, MAX_RETRY);
 
-    console.log(`starting page response: ${response.status()}`);
+    statusMsg(`starting page response: ${response.status()}`);
 
     const userIdSelector = config.login.selectors.user_id;
     const passwordSelector = config.login.selectors.password;
     const loginButtonSelector = config.login.selectors.login_btn;
     const landingSelector = config.end.selectors.common;
 
-    console.log('Waiting for login (no cookie) or common landing (valid cookies) elements');
+    statusMsg('waiting for login (no cookie) or common landing (valid cookies) elements');
     try {
         // Wait for the user ID or landing-page elements
         await page.waitForFunction((userIdSelector, landingSelector) => {
@@ -144,7 +148,7 @@ const displayFormat = async () => {
             await errorMsg(`login url "${page.url()}" did not match "${config.login.url}"`);
         }
 
-        console.log('Validating all login elements');
+        statusMsg('validating all login elements');
         [userIdSelector, passwordSelector, loginButtonSelector].forEach((selector, errorMsg) => {
             if (!page.$(selector)) {
                 errorMsg(`login page missing element - unable to find: ${selector}`);
@@ -152,33 +156,36 @@ const displayFormat = async () => {
         });
 
         // Login using the user ID, password and login button
-        console.log('logging in');
+        statusMsg('logging in');
         await page.click(userIdSelector);
         await page.type(userIdSelector, username);
         await page.click(passwordSelector);
         await page.type(passwordSelector, password);
         await page.click(loginButtonSelector);
-
-        // Wait for the landing element
-        try {
-            await page.waitForSelector(landingSelector, {timeout: config.timeouts.end * 1000});
-        } catch (e) {
-            console.log(e.toString());
-            await saveScreen(page, 'end-failed', logDir, true);
-            await errorMsg(`end page did not appear - final URL: ${page.url()}`);
-        }
     } else {
-        console.log(`appear to already be logged in - url: ${page.url()}`)
+        statusMsg(`appear to already be logged in, URL: ${page.url()}`);
     }
 
-    if (! page.url().includes(config.end.url)) {
+    // Wait for the landing element - should be found in all cases
+    try {
+        await page.waitForSelector(landingSelector, {timeout: config.timeouts.end * 1000});
+        statusMsg(`ending selector found: "${landingSelector}"`);
+    } catch (e) {
+        statusMsg(e.toString());
+        await saveScreen(page, 'end-failed', logDir, true);
+        await errorMsg(`ending selector did not appear ${landingSelector} - final URL: ${page.url()}`);
+    }
+
+    if (page.url().includes(config.end.url)) {
+        statusMsg(`successfully reached ending URL: ${config.end.url}`);
+    } else {
         await saveScreen(page, 'end-failed', logDir, true);
         await errorMsg(`end page did not appear - final URL: ${page.url()}`);
     }
 
     // Save cookies if enabled
     if (config.cookies.active) {
-        await cookies.write(page, config.cookies.path, config.cookies.urls);
+        await cookies.write(page, config.cookies.path, config.cookies.urls, statusMsg);
     }
 
     await browser.close();
@@ -189,6 +196,6 @@ const displayFormat = async () => {
     let timeInMs = end - start;
 
     const timeToComplete = Number((timeInMs / 1000).toFixed(1));
-    console.log(`Completed web session. Took ${timeToComplete} seconds.`);
+    statusMsg(`completed web session. Took ${timeToComplete} seconds.`);
 
 })();
